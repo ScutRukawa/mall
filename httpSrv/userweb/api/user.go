@@ -25,7 +25,7 @@ import (
 
 type ServerConfig struct {
 	ServiceName string      `mapstructure:"name"`
-	MysqlInfo   MysqlConfig `mapstructure:"mysql"`
+	UserSrvInfo MysqlConfig `mapstructure:"mysql"`
 }
 
 type MysqlConfig struct {
@@ -78,19 +78,13 @@ func HandleValidatorErr(ctx *gin.Context, err error) {
 	})
 }
 func GetUserList(ctx *gin.Context) {
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.MysqlInfo.Host,
-		global.ServerConfig.MysqlInfo.Port), grpc.WithInsecure())
-	if err != nil {
-		zap.S().Errorw("连接用户服务失败", "msg", err)
-	}
-
 	//打印当前用户
-	claims, _ := ctx.Get("claims")
-	currentUser := claims.(*models.CustomClaims)
-	zap.S().Infof("访问用户:%d", currentUser.ID)
+	// claims, _ := ctx.Get("claims")
+	// currentUser := claims.(*models.CustomClaims)
+	// zap.S().Infof("访问用户:%d", currentUser.ID)
 
 	//grpc client
-	userSrvClient := proto.NewUserClient(userConn)
+	// userSrvClient := proto.NewUserClient(userConn)
 	pn := ctx.DefaultQuery("pn", "0")
 	pnInt, _ := strconv.Atoi(pn)
 	pSize := ctx.DefaultQuery("psize", "10")
@@ -100,7 +94,7 @@ func GetUserList(ctx *gin.Context) {
 		Pn:    uint32(pnInt),
 		PSize: uint32(pSizeInt),
 	}
-	userinfo, err := userSrvClient.GetUserList(ctx, pageInfo)
+	userinfo, err := global.UseSrvClient.GetUserList(ctx, pageInfo)
 	if err != nil {
 		zap.S().Error("获取用户列表页失败：", err)
 		HandleGrpcErrorToHttp(err, ctx)
@@ -128,9 +122,16 @@ func PasswordLogin(ctx *gin.Context) {
 		HandleValidatorErr(ctx, err)
 		return
 	}
+	//验证码
+	if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, true) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"captcha": "验证码错误",
+		})
+		return
+	}
 	//登录逻辑
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.MysqlInfo.Host,
-		global.ServerConfig.MysqlInfo.Port), grpc.WithInsecure())
+	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserSrvInfo.Host,
+		global.ServerConfig.UserSrvInfo.Port), grpc.WithInsecure())
 	if err != nil {
 		zap.S().Errorw("连接用户服务失败", "msg", err)
 	}
@@ -187,7 +188,6 @@ func PasswordLogin(ctx *gin.Context) {
 	}
 
 }
-
 func removeTopStruct(fields map[string]string) map[string]string {
 	rsp := map[string]string{}
 	for field, err := range fields {
@@ -195,3 +195,27 @@ func removeTopStruct(fields map[string]string) map[string]string {
 	}
 	return rsp
 }
+
+// func FilterService() (host string, port int) {
+// 	cfg := consulApi.DefaultConfig()
+// 	consulInfo := global.ServerConfig.ConsulInfo
+// 	cfg.Address = fmt.Sprintf("%s:%d", consulInfo.Host, consulInfo.Port)
+// 	zap.S().Debug("cfg.Address", cfg.Address)
+// 	client, err := consulApi.NewClient(cfg)
+
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	filterStr := fmt.Sprintf("Service==\"%s\"", global.ServerConfig.UserSrvInfo.SrvName)
+// 	data, err := client.Agent().ServicesWithFilter(filterStr)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	for _, value := range data {
+// 		host = value.Address
+// 		port = value.Port
+// 		zap.S().Debug("cfg.Address", host, port)
+// 		break
+// 	}
+// 	return host, port
+// }
