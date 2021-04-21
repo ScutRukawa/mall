@@ -7,8 +7,12 @@ import (
 	ut "github.com/go-playground/universal-translator"
 )
 
-var ServerConfig *config.ServerConfig
+var (
+	ServerConfig *config.ServerConfig = &config.ServerConfig{}
 
-var Trans ut.Translator
+	Trans ut.Translator
 
-var UseSrvClient proto.UserClient
+	UseSrvClient proto.UserClient
+
+	NacosConfig *config.NacosConfig = &config.NacosConfig{}
+)

@@ -6,9 +6,10 @@ import (
 	"userweb/initialize"
 	myvalidator "userweb/validator"
 
-	"github.com/go-playground/validator/v10"
+	_ "github.com/nacos-group/nacos-sdk-go/common/constant"
 
 	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
