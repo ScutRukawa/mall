@@ -16,7 +16,8 @@ const (
 
 type User struct {
 	ID       int32     `db:"id,uni"`
-	Mobile   string    `db:"mobile,uni"` //必须添加uni 唯一索引查找？ 如何实现？
+	UserID   int32     `db:"user_id,uni"`
+	Mobile   string    `db:"mobile,uni"`
 	Password string    `db:"password"`
 	NickName string    `db:"nickname"`
 	Headurl  string    `db:"headurl"`

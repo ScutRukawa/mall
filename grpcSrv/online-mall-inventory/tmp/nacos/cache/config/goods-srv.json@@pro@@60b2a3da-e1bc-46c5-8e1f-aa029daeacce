@@ -1,0 +1,9 @@
+{
+  "name": "goods-srv",
+  "mysql": {
+    "host": "127.0.0.1",
+    "port": 3339,
+    "user": "root",
+    "password": "123456"
+  }
+}

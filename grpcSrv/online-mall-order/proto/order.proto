@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+option go_package = "proto";
+
+service Order{
+    rpc CartItemList(UserInfo) returns(CartItemListResponse);
+    rpc CreateCartItem(CartItemRequest) returns(commonResponse);//加入购物车
+    rpc UpdateCartItem(CartItemRequest) returns(commonResponse);
+    rpc DeleteCartItem(CartItemRequest) returns(commonResponse);
+
+
+    //订单
+    rpc CreateOrder(OrderRequest) returns(OrderInfoResponse);//创建订单
+    rpc OrderList(OrderFilterRequest) returns(OrderListResponse);//订单列表
+    rpc OrderDetail(OrderRequest) returns(OrderInfoDetailResponse);//订单详情
+    rpc UpdateOrderStatus(OrderStatus) returns(commonResponse);
+}
+
+enum RetCode {
+    SUCCESS = 0;
+    ERROR = 500;
+}
+
+message UserInfo{
+    int32 id =1;
+}
+message commonResponse {
+    RetCode code =1;
+}
+
+message ShopCartInfoResponse{
+    int32 id =1;
+    int32 userId=2;
+    int32 goodsId =3;
+    int32 nums=4;
+    bool checked=5;
+}
+message CartItemListResponse{
+    int32 total =1 ;
+    repeated ShopCartInfoResponse data=2;
+}
+message CartItemRequest{
+    int32 id =1;
+    int32 userId=2;
+    int32 goodsId =3;
+    int32 nums=4;
+    bool checked=5;
+}
+
+message OrderRequest{
+    string orderId =1;
+    int32 userId=2;
+    string address=3;
+    string mobile =4;
+    string name=5;
+    string post=6;
+}
+
+message OrderInfoResponse{
+    int32 id =1;
+    int32 userId=2;
+    string orderId=3;
+    int32 payType =4;
+    int32 status =5;
+    string post=6;
+    float total=7;
+    string address=8;
+    string name =9;
+    string mobile=10;
+}
+message OrderListResponse{
+    int32 total=1;
+    repeated OrderInfoResponse data =2;
+}
+message OrderFilterRequest{
+    int32 userId=1;
+    int32 pages=2;
+    int32 pagePerNum=3;
+}
+message OrderItemResponse {
+    int32 id =1;
+    string orderId=2;
+    int32 goodsId=3;
+    string goodsName=4;
+    float goodsPrice=5;
+    int32 nums=6;
+}
+message OrderInfoDetailResponse{
+    OrderInfoResponse orderInfo=1;
+    repeated OrderItemResponse data=2;
+}
+
+message OrderStatus{
+    string OrderId=1;
+    int32 status =2;
+}
