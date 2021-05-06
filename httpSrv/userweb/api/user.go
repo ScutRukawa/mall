@@ -18,7 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -123,22 +122,18 @@ func PasswordLogin(ctx *gin.Context) {
 		return
 	}
 	//验证码
-	if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, true) {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"captcha": "验证码错误",
-		})
-		return
-	}
+	// if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, true) {
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{
+	// 		"captcha": "验证码错误",
+	// 	})
+	// 	return
+	// }
 	//登录逻辑
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserSrvInfo.Host,
-		global.ServerConfig.UserSrvInfo.Port), grpc.WithInsecure())
-	if err != nil {
-		zap.S().Errorw("连接用户服务失败", "msg", err)
-	}
-	userSrvClient := proto.NewUserClient(userConn)
-	if rsp, err := userSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{
+
+	if rsp, err := global.UseSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{
 		Moblie: passwordLoginForm.Mobile,
 	}); err != nil { //是否存在
+		zap.S().Info("获取用户信息错误：", err)
 		if e, ok := status.FromError(err); ok {
 			switch e.Code() {
 			case codes.NotFound:

@@ -11,8 +11,6 @@ type ServerConfig struct {
 }
 
 type UserSrvConfig struct {
-	Host    string `mapstructure:"host" json:"host"`
-	Port    int    `mapstructure:"port" json:"port"`
 	SrvName string `mapstructure:"srv_name" json:"srv_name"`
 }
 

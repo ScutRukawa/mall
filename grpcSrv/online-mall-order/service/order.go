@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type OrderService struct {
@@ -77,19 +78,20 @@ func (o *OrderService) DeleteCartItem(ctx context.Context, request *proto.CartIt
 }
 
 func (o *OrderService) UpdateCartItem(ctx context.Context, request *proto.CartItemRequest) (*proto.CommonResponse, error) {
+	zap.S().Info("更新商品：", request)
 	rsp := proto.CommonResponse{}
-	shoppingCartItem := model.ShoppingCart{}
-	shoppingCartItem.Checked = request.Checked
-	shoppingCartItem.Nums = request.Nums
-	shoppingCartItem.GoodsId = request.GoodsId
-	updateRsp, err := global.Engine.Update(&shoppingCartItem,
-		model.ShoppingCart{UserId: request.UserId, GoodsId: request.GoodsId})
-	if err != nil {
+	updateField := map[string]interface{}{"user_id": request.UserId, "checked": request.Checked}
+	affected, err := global.Engine.Table(new(model.ShoppingCart)).Where("user_id=? and goods_id=?", request.UserId, request.GoodsId).Update(updateField)
+	// shoppingCartItem := model.ShoppingCart{}
+	// shoppingCartItem.Checked = request.Checked
+	// shoppingCartItem.Nums = request.Nums
+	// updateRsp, err := global.Engine.Where("user_id=? and goods_id=?", request.UserId, request.GoodsId).Update(&shoppingCartItem)
+	if err != nil || affected == 0 {
 		zap.S().Error(err)
 		rsp.Code = proto.RetCode_ERROR
-		return &rsp, err
+		return &rsp, status.Errorf(codes.NotFound, "商品不存在")
 	}
-	zap.S().Info("insert updateRsp:", updateRsp)
+	zap.S().Info("更新商品状态成功:", affected)
 	rsp.Code = proto.RetCode_SUCCESS
 	return &rsp, nil
 }
@@ -127,7 +129,7 @@ func (o *OrderService) CreateOrder(ctx context.Context, request *proto.OrderRequ
 
 	//查询商品信息
 	req := proto.BatchGoodsIdInfo{Id: goods_id}
-	order_goods_slice := make([]model.OrderGoods, 0)
+	order_goods_slice := make([]*model.OrderGoods, 0)
 	goodsListRsp, err := global.GoodsSrvClient.BatchGetGoods(ctx, &req)
 	if err != nil {
 		md := metadata.Pairs("code", strconv.Itoa(int(codes.NotFound)), "message", "获取商品信息失败")
@@ -137,19 +139,20 @@ func (o *OrderService) CreateOrder(ctx context.Context, request *proto.OrderRequ
 	}
 	zap.S().Info("goodsListRsp:", goodsListRsp.Data)
 	var order_amount float32 = 0
-	order_goods := model.OrderGoods{}
+
 	for _, goodsInfo := range goodsListRsp.Data {
-		order_amount += goodsInfo.ShopPrice * float32(goods_nums[goods_id[goodsInfo.GoodsId]])
-		order_goods.GoodsId = goodsInfo.Id
+		order_goods := model.OrderGoods{}
+		order_amount += goodsInfo.ShopPrice * float32(goods_nums[goodsInfo.GoodsId])
+		zap.S().Info("goodsInfo:", goodsInfo)
+		order_goods.GoodsId = goodsInfo.GoodsId
 		order_goods.GoodsName = goodsInfo.Name
 		order_goods.GoodsPrice = goodsInfo.ShopPrice
-		order_goods_slice = append(order_goods_slice, order_goods)
+		order_goods_slice = append(order_goods_slice, &order_goods)
 
-		goodsInvInfo := proto.GoodsInvInfo{GoodsId: goodsInfo.Id, Num: goods_nums[goods_id[goodsInfo.GoodsId]]}
+		goodsInvInfo := proto.GoodsInvInfo{GoodsId: goodsInfo.GoodsId, Num: goods_nums[goodsInfo.GoodsId]}
 		goods_sell_info.GoodsInfo = append(goods_sell_info.GoodsInfo, &goodsInvInfo)
 		zap.S().Info("goodsInvInfo:", goodsInvInfo)
 	}
-	zap.S().Info("goods_nums:", goods_nums)
 	//扣减库存
 	zap.S().Info("InvSrvClient.Sell:", goods_sell_info.GoodsInfo)
 	_, err = global.InvSrvClient.Sell(ctx, &goods_sell_info)
@@ -168,19 +171,26 @@ func (o *OrderService) CreateOrder(ctx context.Context, request *proto.OrderRequ
 	order.SignerNum = request.Mobile
 	order.OrderId = generate_orderId(request.UserId)
 	order.OrderMount = order_amount
-	order.Status = model.WAIT_BUYER_PAY
+	order.Status = model.TradeStatusWaitBuyerPay
 	order.Post = request.Post
 	order.Total = order_amount
 	order.SignerName = request.Name
 
-	zap.S().Info("order.OrderId", order.OrderId)
+	affected, err := global.Engine.Insert(&order)
+	if err != nil || affected == 0 {
+		zap.S().Error("插入订单失败：", err)
+		session.Rollback()
+		return nil, status.Errorf(codes.Unknown, "插入订单失败")
+	}
 
 	//批量插入订单商品表
 	for _, order_goods := range order_goods_slice {
 		order_goods.OrderId = order.OrderId
 	}
-	_, err = global.Engine.Insert(&order_goods_slice)
-	if err != nil {
+	zap.S().Info("order_goods_slice", order_goods_slice)
+	affected, err = global.Engine.Insert(&order_goods_slice)
+
+	if err != nil || affected == 0 {
 		zap.S().Error("批量插入订单商品表失败：", err)
 		md := metadata.Pairs("code", strconv.Itoa(int(codes.Unknown)), "message", "插入订单商品失败")
 		ctx = metadata.NewOutgoingContext(context.Background(), md)
@@ -202,6 +212,7 @@ func (o *OrderService) CreateOrder(ctx context.Context, request *proto.OrderRequ
 		Total:   order.Total,
 	}
 	return &rsp, nil
+
 }
 func (o *OrderService) OrderList(ctx context.Context, request *proto.OrderFilterRequest) (*proto.OrderListResponse, error) {
 	orderList := make([]*model.OrderInfo, 0)
@@ -248,8 +259,9 @@ func (o *OrderService) OrderDetail(ctx context.Context, request *proto.OrderRequ
 func (o *OrderService) UpdateOrderStatus(ctx context.Context, request *proto.OrderStatus) (*proto.CommonResponse, error) {
 	commenRsp := proto.CommonResponse{}
 	commenRsp.Code = proto.RetCode_SUCCESS
-	orderInfo := model.OrderInfo{Status: model.OrderStatus(request.Status)}
-	_, err := global.Engine.Where("order_id=?", request.OrderId).Update(&orderInfo)
+	// orderInfo := model.OrderInfo{Status: model.TradeStatus(request.Status)}
+	orderInfo := map[string]interface{}{"status": request.Status}
+	_, err := global.Engine.Table(new(model.OrderInfo)).Where("order_id=?", request.OrderId).Update(&orderInfo)
 	if err != nil {
 		zap.S().Error("UpdateOrderStatus failed : ", err)
 		commenRsp.Code = proto.RetCode_ERROR
@@ -267,7 +279,7 @@ func convertOrderInfo2Dto(orderInfoDto *proto.OrderInfoResponse, orderInfo *mode
 	orderInfoDto.Name = orderInfo.SignerName
 	orderInfoDto.Post = orderInfo.Post
 	orderInfoDto.UserId = orderInfo.UserId
-	orderInfoDto.Status = int32(orderInfo.Status)
+	orderInfoDto.Status = string(orderInfo.Status)
 	orderInfoDto.Total = float32(orderInfo.Total)
 }
 

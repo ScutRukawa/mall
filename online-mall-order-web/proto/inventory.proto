@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option go_package = "proto";
+
+service Inventory{
+    rpc SetInv(GoodsInvInfo) returns(CommonRsp);
+    rpc GetInv(GoodsInvInfo) returns(GoodsInvInfoRsp);
+    rpc Sell(SellInfo) returns (SellRsp);
+    rpc Reback(SellInfo) returns (CommonRsp);
+
+}
+
+message GoodsInvInfo{
+    int32 goodsId =1;
+    int32 num =2 ;
+}
+
+message GoodsInvInfoRsp{
+    int32 num =1 ;
+}
+
+message SellInfo{
+    repeated GoodsInvInfo goodsInfo =1;
+}
+
+message ReBackInfo{
+    repeated int64 orderId  =1 ;
+}
+
+message SellRsp{
+    RetCodeInventory code =1;
+}
+
+message CommonRsp{
+    RetCodeInventory code =1;
+}
+
+enum RetCodeInventory {
+    SUCCESS_INVENTORY= 0;
+    ERROR_INVENTORY = 500;
+    inventory_insufficient =50001;
+}

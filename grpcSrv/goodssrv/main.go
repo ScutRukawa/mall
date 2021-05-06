@@ -41,11 +41,9 @@ func main() {
 	v1.Register("127.0.0.1", port, global.ServerConfig.ServiceName, []string{"mall", "wei"}, u1)
 	v1.OnExit(u1)
 
-	// goodsList := make([]*model.Goods, 10)
-	// var goodsList []model.Goods
-	// query := "name LIKE ? AND is_hot=? AND is_new=? AND ?<=shop_price<=? AND brands_id=?"
-	// db.GetDB().Where(query, "%"+"goods1"+"%", false, false, 0, 100, 10).Find(&goodsList)
-
-	// fmt.Println("v", goodsList)
+	// cfg := api.DefaultConfig()
+	// cfg.Address = "127.0.0.1:8500"
+	// client, _ := api.NewClient(cfg)
+	// client.Agent().ServiceDeregister("5bc377bf-32e8-498c-a290-c3166ef3a7aa")
 
 }

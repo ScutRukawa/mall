@@ -18,7 +18,7 @@ import (
 func main() {
 
 	// 创建UUID
-	u1 := uuid.Must(uuid.NewV4()).String() 
+	u1 := uuid.Must(uuid.NewV4()).String()
 	fmt.Printf("UUIDv4: %s\n", u1)
 
 	g := grpc.NewServer()

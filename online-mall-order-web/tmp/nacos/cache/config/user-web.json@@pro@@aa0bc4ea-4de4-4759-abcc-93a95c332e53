@@ -1,0 +1,20 @@
+{
+  "name": "online-mall-order-web",
+  "port": 8021,
+  "user_srv": {
+    "host": "192.168.0.112",
+    "port": 8088,
+    "srv_name": "user_srv"
+  },
+  "jwt": {
+    "key": "243223ffslsfsldfl412fdsfsdf"
+  },
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379
+  },
+  "consul": {
+    "host": "127.0.0.1",
+    "port": 8500
+  }
+}

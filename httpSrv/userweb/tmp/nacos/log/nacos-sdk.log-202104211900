@@ -1,5 +1,0 @@
-2021-04-21T19:55:28.106+0800	[34mINFO[0m	[client.ListenConfig] request params:map[Listening-Configs:user-web.jsonpro394ad98922f68758722c5849405354a2aa0bc4ea-4de4-4759-abcc-93a95c332e53 tenant:aa0bc4ea-4de4-4759-abcc-93a95c332e53] header:map[Content-Type:application/x-www-form-urlencoded;charset=utf-8 Long-Pulling-Timeout:30000 Long-Pulling-Timeout-No-Hangup:true accessKey: secretKey:] 
-
-2021-04-21T19:55:28.545+0800	[34mINFO[0m	[client.ListenConfig] no change
-2021-04-21T19:55:28.555+0800	[34mINFO[0m	[client.ListenConfig] request params:map[Listening-Configs:user-web.jsonpro394ad98922f68758722c5849405354a2aa0bc4ea-4de4-4759-abcc-93a95c332e53 tenant:aa0bc4ea-4de4-4759-abcc-93a95c332e53] header:map[Content-Type:application/x-www-form-urlencoded;charset=utf-8 Long-Pulling-Timeout:30000 accessKey: secretKey:] 
-

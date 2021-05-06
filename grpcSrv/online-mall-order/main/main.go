@@ -31,14 +31,14 @@ func main() {
 
 	g := grpc.NewServer()
 	proto.RegisterOrderServer(g, &service.OrderService{})
-	//port, _ := utils.GetFreePort()
-	listener, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(8088))
+	port, _ := utils.GetFreePort()
+	listener, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(port))
 	if err != nil {
 		panic(err)
 	}
 	go func() {
 		g.Serve(listener)
 	}()
-	utils.Register("127.0.0.1", 8088, global.ServerConfig.ServiceName, []string{"mall", "wei"}, u1)
+	utils.Register("127.0.0.1", port, global.ServerConfig.ServiceName, []string{"mall", "wei"}, u1)
 	utils.OnExit(u1)
 }

@@ -51,6 +51,8 @@ func (i *InventoryService) Sell(ctx context.Context, request *proto.SellInfo) (*
 	session.Begin()
 	for _, item := range request.GoodsInfo {
 		zap.S().Info("Sell item:", item)
+		zap.S().Info("Sell item.goods_id:", item.GoodsId)
+
 		// for {
 		inventory := model.Inventory{}
 		_, _ = session.Where("goods_id=?", item.GoodsId).Get(&inventory)

@@ -16,7 +16,6 @@ const (
 
 type User struct {
 	ID       int32     `db:"id,uni"`
-	UserID   int32     `db:"user_id,uni"`
 	Mobile   string    `db:"mobile,uni"`
 	Password string    `db:"password"`
 	NickName string    `db:"nickname"`

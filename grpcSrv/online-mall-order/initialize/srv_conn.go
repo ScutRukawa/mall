@@ -22,13 +22,11 @@ func InitConn() {
 		grpc.WithInsecure(),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
 	)
-	zap.S().Info(goodsConn)
 	if err != nil {
 		log.Fatal(err)
 	}
 	goodsSrvClient := proto.NewGoodsClient(goodsConn)
 	global.GoodsSrvClient = goodsSrvClient
-	zap.S().Info("GoodsSrvClient :", goodsSrvClient)
 
 	//inventory connection
 	srvName = global.ServerConfig.InventorySrv.Name

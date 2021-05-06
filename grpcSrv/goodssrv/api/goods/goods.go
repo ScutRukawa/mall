@@ -7,6 +7,8 @@ import (
 	"goodssrv/proto"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -24,10 +26,10 @@ func (g *Goods) BatchGetGoods(ctx context.Context, request *proto.BatchGoodsIdIn
 	goossInfoRsp := make([]*proto.GoodsInfoResponse, 0)
 	for _, id := range request.Id {
 		goods := model.Goods{}
-		global.Engine.Where("id=?", id).Get(&goods)
+		global.Engine.Where("goods_id=?", id).Get(&goods)
 		goodsInfo := proto.GoodsInfoResponse{
 			Name:      goods.Name,
-			Id:        int32(goods.Id),
+			GoodsId:   int32(goods.GoodsId),
 			ShopPrice: float32(goods.ShopPrice),
 		}
 		goossInfoRsp = append(goossInfoRsp, &goodsInfo)
@@ -47,7 +49,15 @@ func (g *Goods) UpdateGoods(ctx context.Context, request *proto.CreateGoodsInfo)
 	return nil, nil
 }
 func (g *Goods) GetGoodsDetail(ctx context.Context, request *proto.GoodInfoRequest) (*proto.GoodsInfoResponse, error) {
-	return nil, nil
+	rsp := proto.GoodsInfoResponse{}
+	goodsItem := model.Goods{}
+	ok, err := global.Engine.ID(request.Id).Get(&goodsItem)
+	if err != nil || !ok {
+		return nil, status.Errorf(codes.NotFound, "商品不存在")
+	}
+	rsp.Id = goodsItem.Id
+	rsp.ShopPrice = float32(goodsItem.ShopPrice)
+	return &rsp, nil
 }
 
 //商品分类
