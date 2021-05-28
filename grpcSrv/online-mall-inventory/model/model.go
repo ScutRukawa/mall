@@ -5,7 +5,7 @@ import "time"
 type InventoryHistoryStatus int
 
 const (
-	InStock  InventoryHistoryStatus = 1
+	Reback   InventoryHistoryStatus = 1
 	OutStock InventoryHistoryStatus = 2
 )
 
@@ -19,12 +19,29 @@ type Inventory struct {
 }
 
 type InventoryHistory struct {
-	Id         int                    `xorm:"pk autoincr BIGINT"`
-	UserId     int                    `xorm:"comment('商品id') UNIQUE BIGINT"`
-	GoodsId    int                    `xorm:"comment('商品id') BIGINT"`
-	Nums       int                    `xorm:"comment('操作数量') INT"`
-	OrderId    int                    `xorm:"comment('订单id') index BIGINT"`
-	Status     InventoryHistoryStatus `xorm:"comment('是否出库') TINYINT"`
-	CreateTime time.Time              `xorm:"not null default CURRENT_TIMESTAMP comment('创建时间') DATETIME"`
-	UpdateTime time.Time              `xorm:"not null default CURRENT_TIMESTAMP comment('修改时间') DATETIME"`
+	Id             int                    `xorm:"pk autoincr BIGINT"`
+	OrderId        string                 `xorm:"comment('订单id') varchar(50)"`
+	OrderInvDetail []byte                 `xorm:"comment('订单详情') BLOB"`
+	Status         InventoryHistoryStatus `xorm:"comment('is reback') TINYINT"`
+	CreateTime     time.Time              `xorm:"not null created   comment('创建时间') DATETIME"`
+	UpdateTime     time.Time              `xorm:"not null updated  comment('修改时间') DATETIME"`
+}
+
+type OrderMsgBody struct {
+	OrderId string `json:"order_id"`
+	UserId  int32  `json:"user_id"`
+	Address string `json:"address"`
+	Mobile  string `json:"mobile"`
+	Post    string `json:"post"`
+	Name    string `json:"name"`
+}
+type OrderInvDetial struct {
+	GoodsNumsMap map[int32]interface{} `json:"goods_nums_map"`
+}
+
+func NewOrderInvDetial() *OrderInvDetial {
+	goodsNumsMap := make(map[int32]interface{}, 2)
+	return &OrderInvDetial{
+		GoodsNumsMap: goodsNumsMap,
+	}
 }

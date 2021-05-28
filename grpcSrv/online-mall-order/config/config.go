@@ -25,6 +25,7 @@ type ServerConfig struct {
 	MysqlInfo    MysqlConfig        `mapstructure:"mysql" json:"mysql"`
 	GoodsSrv     GoodsSrvConfig     `mapstructure:"goods-srv" json:"goods-srv"`
 	InventorySrv InventorySrvConfig `mapstructure:"inventory-srv" json:"inventory-srv"`
+	RocketMQInfo RocketMQConfig     `mapstructure:"rocketmq" json:"rocketmq"`
 }
 
 type RedisConfig struct {
@@ -43,4 +44,8 @@ type GoodsSrvConfig struct {
 
 type InventorySrvConfig struct {
 	Name string `mapstructure:"name" json:"name"`
+}
+type RocketMQConfig struct {
+	Host string `mapstructure:"host" json:"host"`
+	Port int    `mapstructure:"port" json:"port"`
 }

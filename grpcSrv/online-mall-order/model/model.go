@@ -49,3 +49,4 @@ type OrderGoods struct {
 	GoodsPrice float32 `xorm:"comment('商品名称') float"`
 	Nums       int32   `xorm:"comment('商品数量') INT"`
 }
+

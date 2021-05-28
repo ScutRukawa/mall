@@ -19,10 +19,11 @@ type MysqlConfig struct {
 
 //线上线下配置文件隔离
 type ServerConfig struct {
-	ServiceName string      `mapstructure:"name" json:"name"`
-	Redisinfo   RedisConfig `mapstructure:"redis" json:"redis"`
-	ConsulInfo  RedisConfig `mapstructure:"consul" json:"consul"`
-	MysqlInfo   MysqlConfig `mapstructure:"mysql" json:"mysql"`
+	ServiceName  string         `mapstructure:"name" json:"name"`
+	Redisinfo    RedisConfig    `mapstructure:"redis" json:"redis"`
+	ConsulInfo   RedisConfig    `mapstructure:"consul" json:"consul"`
+	MysqlInfo    MysqlConfig    `mapstructure:"mysql" json:"mysql"`
+	RocketMQInfo RocketMQConfig `mapstructure:"rocketmq" json:"rocketmq"`
 }
 
 type RedisConfig struct {
@@ -31,6 +32,11 @@ type RedisConfig struct {
 }
 
 type ConsulConfig struct {
+	Host string `mapstructure:"host" json:"host"`
+	Port int    `mapstructure:"port" json:"port"`
+}
+
+type RocketMQConfig struct {
 	Host string `mapstructure:"host" json:"host"`
 	Port int    `mapstructure:"port" json:"port"`
 }

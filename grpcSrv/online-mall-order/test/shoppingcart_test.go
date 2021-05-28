@@ -44,7 +44,7 @@ func TestCreateCartItem(t *testing.T) {
 		if err != nil {
 			zap.S().Error("CreateCartItem error: ", err)
 		}
-		So(rsp.Code, ShouldEqual, proto.RetCode_SUCCESS)
+		So(rsp.Code, ShouldEqual, proto.OrderRetCode_SUCCESS)
 	})
 }
 func TestDeleteCartItem(t *testing.T) {
@@ -62,7 +62,7 @@ func TestDeleteCartItem(t *testing.T) {
 		if err != nil {
 			zap.S().Error("DeleteCartItem error: ", err)
 		}
-		So(rsp.Code, ShouldEqual, proto.RetCode_SUCCESS)
+		So(rsp.Code, ShouldEqual, proto.OrderRetCode_SUCCESS)
 	})
 }
 func TestUpdateCartItem(t *testing.T) {
@@ -83,6 +83,6 @@ func TestUpdateCartItem(t *testing.T) {
 		if err != nil {
 			zap.S().Error("UpdateCartItem error: ", err)
 		}
-		So(rsp.Code, ShouldEqual, proto.RetCode_SUCCESS)
+		So(rsp.Code, ShouldEqual, proto.OrderRetCode_SUCCESS)
 	})
 }

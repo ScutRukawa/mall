@@ -16,7 +16,7 @@ service Order{
     rpc UpdateOrderStatus(OrderStatus) returns(commonResponse);
 }
 
-enum RetCode {
+enum OrderRetCode {
     SUCCESS = 0;
     ERROR = 500;
 }
@@ -25,7 +25,7 @@ message UserInfo{
     int32 id =1;
 }
 message commonResponse {
-    RetCode code =1;
+    OrderRetCode code =1;
 }
 
 message ShopCartInfoResponse{

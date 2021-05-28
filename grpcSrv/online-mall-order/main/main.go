@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"online-mall-order/global"
@@ -11,8 +12,12 @@ import (
 	"online-mall-order/utils"
 	"strconv"
 
+	"github.com/apache/rocketmq-client-go/v2"
+	"github.com/apache/rocketmq-client-go/v2/consumer"
+	"github.com/apache/rocketmq-client-go/v2/primitive"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -30,7 +35,8 @@ func main() {
 	fmt.Printf("UUIDv4: %s\n", u1)
 
 	g := grpc.NewServer()
-	proto.RegisterOrderServer(g, &service.OrderService{})
+	orderService := service.NewOrderService()
+	proto.RegisterOrderServer(g, orderService)
 	port, _ := utils.GetFreePort()
 	listener, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(port))
 	if err != nil {
@@ -39,6 +45,33 @@ func main() {
 	go func() {
 		g.Serve(listener)
 	}()
+
+	mqAddr := fmt.Sprintf("%s:%d", global.ServerConfig.RocketMQInfo.Host, global.ServerConfig.RocketMQInfo.Port)
+	c, err := rocketmq.NewPushConsumer(
+		consumer.WithGroupName("order_delay_group"),
+		consumer.WithNameServer([]string{mqAddr}),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = c.Subscribe("order_delay_topic", consumer.MessageSelector{},
+		func(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.ConsumeResult, error) {
+			for _, msg := range msgs {
+				zap.S().Info("get message from mq:", msg)
+				if service.OrderDelayProcess(msg) != nil {
+					return consumer.ConsumeRetryLater, nil
+				}
+			}
+			zap.S().Info("消费确认")
+			return consumer.ConsumeSuccess, nil
+		})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	if err = c.Start(); err != nil {
+		fmt.Println(err.Error())
+	}
 	utils.Register("127.0.0.1", port, global.ServerConfig.ServiceName, []string{"mall", "wei"}, u1)
 	utils.OnExit(u1)
 }

@@ -21,6 +21,7 @@ message GoodsInvInfoRsp{
 
 message SellInfo{
     repeated GoodsInvInfo goodsInfo =1;
+    string orderId =2;
 }
 
 message ReBackInfo{
