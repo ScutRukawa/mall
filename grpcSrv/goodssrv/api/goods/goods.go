@@ -2,15 +2,21 @@ package goods
 
 import (
 	"context"
+	"encoding/json"
 	"goodssrv/global"
 	"goodssrv/model"
 	"goodssrv/proto"
+	"strconv"
+
+	"golang.org/x/sync/singleflight"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
+
+var sg = &singleflight.Group{}
 
 type Goods struct {
 }
@@ -49,12 +55,31 @@ func (g *Goods) UpdateGoods(ctx context.Context, request *proto.CreateGoodsInfo)
 	return nil, nil
 }
 func (g *Goods) GetGoodsDetail(ctx context.Context, request *proto.GoodInfoRequest) (*proto.GoodsInfoResponse, error) {
-	rsp := proto.GoodsInfoResponse{}
-	goodsItem := model.Goods{}
-	ok, err := global.Engine.ID(request.Id).Get(&goodsItem)
-	if err != nil || !ok {
-		return nil, status.Errorf(codes.NotFound, "商品不存在")
+	res := global.RedisCli.Get(ctx, strconv.Itoa(int(request.Id)))
+	if res.Val() != "" {
+		goods := model.Goods{}
+		if err := json.Unmarshal([]byte(res.Val()), &goods); err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+		goodsRsp := proto.GoodsInfoResponse{}
+		goodsRsp.Id = goods.Id
+		goodsRsp.Name = goods.Name
+		goodsRsp.ShopPrice = float32(goods.ShopPrice)
+		return &goodsRsp, nil
 	}
+	goodsItemSg, err, _ := sg.Do(strconv.Itoa(int(request.Id)), func() (interface{}, error) {
+		goodsItem := model.Goods{}
+		ok, err := global.Engine.ID(request.Id).Get(&goodsItem)
+		if err != nil || !ok {
+			return nil, err
+		}
+		return goodsItem, nil
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	rsp := proto.GoodsInfoResponse{}
+	goodsItem := goodsItemSg.(model.Goods)
 	rsp.Id = goodsItem.Id
 	rsp.ShopPrice = float32(goodsItem.ShopPrice)
 	return &rsp, nil
