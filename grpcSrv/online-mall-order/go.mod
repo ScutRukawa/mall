@@ -3,7 +3,10 @@ module online-mall-order
 go 1.14
 
 require (
+	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
+	github.com/alibaba/sentinel-golang v1.0.2
 	github.com/apache/rocketmq-client-go/v2 v2.1.0
+	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/go-redis/redis/v8 v8.8.2
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v4.0.0+incompatible
